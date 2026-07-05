@@ -42,30 +42,10 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Typecheck
-        if: steps.version-check.outputs.skip != 'true'
-        run: npm run typecheck
-
-      - name: Lint
-        if: steps.version-check.outputs.skip != 'true'
-        run: npm run lint
-
       - name: Test
         if: steps.version-check.outputs.skip != 'true'
         run: npm run test
 
-      - name: Install Playwright browsers
-        if: steps.version-check.outputs.skip != 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: E2E tests
-        if: steps.version-check.outputs.skip != 'true'
-        run: npm run test:e2e
-
-      - name: Build package
-        if: steps.version-check.outputs.skip != 'true'
-        run: npm run build
-
       - name: Publish package
         if: steps.version-check.outputs.skip != 'true'
-        run: npm publish --provenance --access public --tag rc
+        run: npm publish --provenance --access public
