@@ -9,6 +9,7 @@
 import noCompatVocab from './rules/no-compat-vocab.js';
 import noHistoryComments from './rules/no-history-comments.js';
 import noObjectLiteralCast from './rules/no-object-literal-cast.js';
+import noRawFetchInPlugin from './rules/no-raw-fetch-in-plugin.js';
 import noRawPlayerBus from './rules/no-raw-player-bus.js';
 import noRawThrowInPlugin from './rules/no-raw-throw-in-plugin.js';
 import noRawTimersInPlugin from './rules/no-raw-timers-in-plugin.js';
@@ -19,7 +20,7 @@ import pluginIdRequired from './rules/plugin-id-required.js';
 const plugin = {
 	meta: {
 		name: '@nomercy-entertainment/eslint-plugin-player',
-		version: '0.2.0',
+		version: '0.3.0',
 	},
 	rules: {
 		'no-single-letter-ident': noSingleLetterIdent,
@@ -30,6 +31,7 @@ const plugin = {
 		'no-raw-player-bus': noRawPlayerBus,
 		'no-raw-timers-in-plugin': noRawTimersInPlugin,
 		'no-raw-throw-in-plugin': noRawThrowInPlugin,
+		'no-raw-fetch-in-plugin': noRawFetchInPlugin,
 		'plugin-id-required': pluginIdRequired,
 	},
 };
@@ -51,6 +53,7 @@ plugin.configs = {
 			'player/no-raw-player-bus': 'error',
 			'player/no-raw-timers-in-plugin': 'error',
 			'player/no-raw-throw-in-plugin': 'error',
+			'player/no-raw-fetch-in-plugin': 'error',
 			'player/plugin-id-required': 'error',
 		},
 	},

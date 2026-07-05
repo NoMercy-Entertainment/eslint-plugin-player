@@ -32,6 +32,10 @@ ruleTester.run('no-raw-timers-in-plugin', rule, {
 		'class Mixin { tick() { requestAnimationFrame(loop); } }',
 		// Nested non-plugin class inside a plugin method is judged by its own extends.
 		'class P extends Plugin { use() { class H { go() { setTimeout(f, 1); } } } }',
+		// Observer wrapped through the lifecycle helper is the sanctioned form.
+		'class P extends Plugin { use() { this.lifecycle.observe(new ResizeObserver(cb)).observe(el); } }',
+		// Raw observer OUTSIDE a plugin is fine.
+		'class Widget { mount() { new ResizeObserver(cb).observe(el); } }',
 	],
 	invalid: [
 		{
@@ -53,6 +57,18 @@ ruleTester.run('no-raw-timers-in-plugin', rule, {
 		{
 			code: 'class P extends Plugin { use() { window.setTimeout(f, 1); } }',
 			errors: [{ messageId: 'rawTimer', data: { raw: 'setTimeout', helper: 'timeout' } }],
+		},
+		{
+			code: 'class P extends Plugin { private ro = new ResizeObserver(cb); }',
+			errors: [{ messageId: 'rawObserver', data: { observer: 'ResizeObserver' } }],
+		},
+		{
+			code: 'class P extends Plugin<NMVideoPlayer> { use() { const mo = new MutationObserver(cb); mo.observe(el, {}); } }',
+			errors: [{ messageId: 'rawObserver', data: { observer: 'MutationObserver' } }],
+		},
+		{
+			code: 'class P extends Plugin { use() { new IntersectionObserver(cb).observe(el); } }',
+			errors: [{ messageId: 'rawObserver', data: { observer: 'IntersectionObserver' } }],
 		},
 	],
 });

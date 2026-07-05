@@ -18,8 +18,9 @@ Every rule ships in the `recommended` preset at `error`.
 | `player/no-object-literal-cast` | `{ ... } as SomeType`. Type the object at construction instead. `as const` is exempt. |
 | `player/no-unknown-cast` | `x as unknown as T` with no adjacent comment. A short justification on the same line or the line above keeps a structurally forced cast legal. |
 | `player/no-raw-player-bus` | `this.player.on/once/off/emit(...)` inside a plugin. Bypasses scoping and auto-dispose; use the plugin's own `this.on/once/off/emit`. Only fires inside a class that `extends Plugin` — core mixins are untouched. |
-| `player/no-raw-timers-in-plugin` | Raw `setTimeout`/`setInterval`/`requestAnimationFrame`/`addEventListener` inside a plugin. No auto-cleanup; use `this.timeout/interval/frame/listen`. |
+| `player/no-raw-timers-in-plugin` | Raw `setTimeout`/`setInterval`/`requestAnimationFrame`/`addEventListener` and `new ResizeObserver`/`MutationObserver`/`IntersectionObserver`/`PerformanceObserver` inside a plugin. No auto-cleanup; use `this.timeout/interval/frame/listen` and `this.lifecycle.observe(new ResizeObserver(...))`. |
 | `player/no-raw-throw-in-plugin` | `throw new Error(...)` (and other raw error ctors) inside a plugin. Skips the structured error surface; use `this.throw({...})` or `this.report({...})`. Re-throwing a caught value is allowed. |
+| `player/no-raw-fetch-in-plugin` | The global `fetch` (bare, `window.fetch`, `globalThis.fetch`) inside a plugin. Sends no auth and never aborts on dispose; use `this.fetch(url, options?)` which runs the player's auth pipeline and aborts on teardown. A public URL that must not carry auth takes an `eslint-disable` with a reason. |
 | `player/plugin-id-required` | A concrete class extending `Plugin` with no own `static id`. Inheriting the base default `'plugin'` collides and breaks storage/mount namespacing. `abstract` intermediate bases are exempt. |
 
 ## Wiring
@@ -41,6 +42,7 @@ export default antfu({ /* ... */ }, {
     'player/no-raw-player-bus': 'error',
     'player/no-raw-timers-in-plugin': 'error',
     'player/no-raw-throw-in-plugin': 'error',
+    'player/no-raw-fetch-in-plugin': 'error',
     'player/plugin-id-required': 'error',
   },
 }, {
@@ -51,16 +53,17 @@ export default antfu({ /* ... */ }, {
     'player/no-raw-throw-in-plugin': 'off',
     'player/no-raw-timers-in-plugin': 'off',
     'player/no-raw-player-bus': 'off',
+    'player/no-raw-fetch-in-plugin': 'off',
     'player/plugin-id-required': 'off',
   },
 });
 ```
 
-Test files relax the two cast rules (mock construction legitimately casts) and the four boundary rules (test-fixture plugins throw raw errors, use raw timers, and build ad-hoc plugin classes to drive the real paths).
+Test files relax the two cast rules (mock construction legitimately casts) and the boundary rules (test-fixture plugins throw raw errors, use raw timers, fetch, and build ad-hoc plugin classes to drive the real paths).
 
 ## The boundary rules
 
-`no-raw-player-bus`, `no-raw-timers-in-plugin`, and `no-raw-throw-in-plugin` are the mechanical half of the `this`-versus-`this.player` boundary: a plugin extends `this` and reaches the player through `this.player`, but its own lifecycle helpers (`this.on`, `this.timeout`, `this.throw`, ...) are the sanctioned surface because they scope and auto-clean. Reaching past them to the raw player bus, raw timers, or a raw `throw` leaks a listener or drops an error off the structured path. All three fire only inside a class that `extends Plugin`, so core mixins — where `this` already *is* the player — never trigger them. A genuinely-needed exception (a third-party emitter that is not an `EventTarget`, a deliberate re-emit of a dynamically-named player event) takes an `eslint-disable-next-line` with a one-line reason, the same escape hatch `no-unknown-cast` uses.
+`no-raw-player-bus`, `no-raw-timers-in-plugin`, `no-raw-throw-in-plugin`, and `no-raw-fetch-in-plugin` are the mechanical half of the `this`-versus-`this.player` boundary: a plugin extends `this` and reaches the player through `this.player`, but its own lifecycle helpers (`this.on`, `this.timeout`, `this.throw`, `this.fetch`, `this.lifecycle.observe`, ...) are the sanctioned surface because they scope, auth, and auto-clean. Reaching past them to the raw player bus, raw timers or observers, a raw `throw`, or the global `fetch` leaks a listener/observer, drops an error off the structured path, or sends an unauthenticated request that never aborts on teardown. All fire only inside a class that `extends Plugin`, so core mixins — where `this` already *is* the player — never trigger them. A genuinely-needed exception (a third-party emitter that is not an `EventTarget`, a deliberate re-emit of a dynamically-named player event, a public URL that must not carry auth) takes an `eslint-disable-next-line` with a one-line reason, the same escape hatch `no-unknown-cast` uses.
 
 ## Cross-file checks
 
