@@ -1,0 +1,53 @@
+{
+	"name": "@nomercy-entertainment/eslint-plugin-player",
+	"version": "0.2.0",
+	"description": "ESLint rules that enforce the NoMercy player-trio v2 code standard.",
+	"type": "module",
+	"license": "Apache-2.0",
+	"author": "NoMercy Entertainment",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/NoMercy-Entertainment/eslint-plugin-player.git"
+	},
+	"homepage": "https://github.com/NoMercy-Entertainment/eslint-plugin-player#readme",
+	"bugs": {
+		"url": "https://github.com/NoMercy-Entertainment/eslint-plugin-player/issues"
+	},
+	"exports": {
+		".": "./index.js",
+		"./package.json": "./package.json"
+	},
+	"main": "./index.js",
+	"files": [
+		"index.js",
+		"rules",
+		"README.md"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"keywords": [
+		"eslint",
+		"eslintplugin",
+		"eslint-plugin",
+		"nomercy",
+		"player"
+	],
+	"scripts": {
+		"test": "node --test",
+		"check:duplicates": "node scripts/check-duplicate-symbols.mjs",
+		"check:exports": "node scripts/check-package-exports.mjs"
+	},
+	"peerDependencies": {
+		"eslint": ">=9"
+	},
+	"devDependencies": {
+		"@typescript-eslint/parser": "^8.20.0",
+		"@typescript-eslint/typescript-estree": "^8.20.0",
+		"eslint": "^9.18.0",
+		"ts-morph": "^24.0.0"
+	},
+	"engines": {
+		"node": ">=18"
+	}
+}
