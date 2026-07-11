@@ -31,6 +31,10 @@ const GLOBAL_TIMERS = new Map([
 	['requestAnimationFrame', 'frame'],
 ]);
 
+// Only these receivers carry the raw global timers/observers — `foo.setTimeout`
+// on any other object is a tracked helper, not the leaking global.
+const GLOBAL_RECEIVERS = new Set(['window', 'globalThis', 'self']);
+
 // DOM observers with a disconnect() lifecycle — wrap with this.lifecycle.observe().
 const OBSERVERS = new Set([
 	'ResizeObserver',
@@ -81,8 +85,25 @@ export default {
 	create(context) {
 		return {
 			NewExpression(node) {
-				if (node.callee.type !== 'Identifier' || !OBSERVERS.has(node.callee.name))
+				const callee = node.callee;
+				let observer;
+				if (callee.type === 'Identifier' && OBSERVERS.has(callee.name)) {
+					observer = callee.name;
+				}
+				// Namespaced form: `new window.ResizeObserver(cb)` etc.
+				else if (
+					callee.type === 'MemberExpression'
+					&& !callee.computed
+					&& callee.object.type === 'Identifier'
+					&& GLOBAL_RECEIVERS.has(callee.object.name)
+					&& callee.property.type === 'Identifier'
+					&& OBSERVERS.has(callee.property.name)
+				) {
+					observer = callee.property.name;
+				}
+				else {
 					return;
+				}
 				if (!inPluginSubclass(node))
 					return;
 				// The sanctioned wrap is the exception: `this.lifecycle.observe(new ResizeObserver(cb))`.
@@ -91,9 +112,9 @@ export default {
 				if (isLifecycleObserveArgument(node))
 					return;
 				context.report({
-					node: node.callee,
+					node: callee,
 					messageId: 'rawObserver',
-					data: { observer: node.callee.name },
+					data: { observer },
 				});
 			},
 			CallExpression(node) {
@@ -120,7 +141,11 @@ export default {
 						context.report({ node: callee, messageId: 'rawListener' });
 						return;
 					}
-					if (GLOBAL_TIMERS.has(method)) {
+					if (
+						GLOBAL_TIMERS.has(method)
+						&& callee.object.type === 'Identifier'
+						&& GLOBAL_RECEIVERS.has(callee.object.name)
+					) {
 						if (!inPluginSubclass(node))
 							return;
 						context.report({

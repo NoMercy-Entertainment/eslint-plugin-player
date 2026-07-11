@@ -36,6 +36,8 @@ ruleTester.run('no-raw-timers-in-plugin', rule, {
 		'class P extends Plugin { use() { this.lifecycle.observe(new ResizeObserver(cb)).observe(el); } }',
 		// Raw observer OUTSIDE a plugin is fine.
 		'class Widget { mount() { new ResizeObserver(cb).observe(el); } }',
+		// A member `.setTimeout` on a non-global receiver is a tracked helper, not the raw global.
+		'class P extends Plugin { use() { this.scheduler.setTimeout(cb, 1); } }',
 	],
 	invalid: [
 		{
@@ -69,6 +71,11 @@ ruleTester.run('no-raw-timers-in-plugin', rule, {
 		{
 			code: 'class P extends Plugin { use() { new IntersectionObserver(cb).observe(el); } }',
 			errors: [{ messageId: 'rawObserver', data: { observer: 'IntersectionObserver' } }],
+		},
+		// Namespaced observer constructor is still raw.
+		{
+			code: 'class P extends Plugin { private ro = new window.ResizeObserver(cb); }',
+			errors: [{ messageId: 'rawObserver', data: { observer: 'ResizeObserver' } }],
 		},
 	],
 });
