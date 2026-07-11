@@ -13,11 +13,11 @@
  * this rule only catches the mechanical patterns that leaked into the trio.
  */
 
-const DEFAULT_ISSUE_REF = '#\\d+|[A-Z][A-Z0-9]+-\\d+|https?://';
+const DEFAULT_ISSUE_REF = '#\\d+|[(\\[][A-Z][A-Z0-9]+-\\d+|https?://';
 
 const BUG_HISTORY = /\bbug\s+\d/i;
 const SPEC_CITATION = /§/;
-const TODO_MARKER = /\b(?:TODO|FIXME)\b/;
+const TODO_MARKER = /\b(?:TODO|FIXME)\b/i;
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {

@@ -26,6 +26,7 @@ ruleTester.run('no-history-comments', rule, {
 	valid: [
 		'// Resolve before init — re-init corrupts a live instance.\nconst value = 1;',
 		'// TODO(#123): strip the auth paths.\nconst value = 1;',
+		'// TODO(NM-42): decode the caption track.\nconst value = 1;',
 		'// see https://example.test/spec for the wire format\nconst value = 1;',
 		'const value = 1;',
 	],
@@ -44,6 +45,24 @@ ruleTester.run('no-history-comments', rule, {
 		},
 		{
 			code: '// FIXME later\nconst value = 1;',
+			errors: [{ messageId: 'nakedTodo' }],
+		},
+		// Codec/caption tokens look like Jira keys but are not issue refs.
+		{
+			code: '// TODO parse CEA-608 captions from the mux.\nconst value = 1;',
+			errors: [{ messageId: 'nakedTodo' }],
+		},
+		{
+			code: '// TODO decode UTF-8 here.\nconst value = 1;',
+			errors: [{ messageId: 'nakedTodo' }],
+		},
+		{
+			code: '// TODO handle UTF-16 input.\nconst value = 1;',
+			errors: [{ messageId: 'nakedTodo' }],
+		},
+		// Lowercase marker is still a naked TODO.
+		{
+			code: '// todo decode the stream\nconst value = 1;',
 			errors: [{ messageId: 'nakedTodo' }],
 		},
 	],
