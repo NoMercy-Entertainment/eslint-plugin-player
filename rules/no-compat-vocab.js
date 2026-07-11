@@ -19,6 +19,14 @@ const DEFAULT_IDENTIFIER_PATTERNS = ['^(Play|Volume|Repeat|Shuffle)StateToken$']
 const DEFAULT_CLASSES = ['PlayerCore'];
 const DEFAULT_COMMENT_SUBSTRINGS = ['@deprecated', 'compatible alias', 'compat alias', 'v1-compat'];
 
+/**
+ * @param {string} text
+ * @returns {string}
+ */
+function escapeRegExp(text) {
+	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
 	meta: {
@@ -62,6 +70,13 @@ export default {
 		const patterns = (options.identifierPatterns ?? DEFAULT_IDENTIFIER_PATTERNS).map(source => new RegExp(source));
 		const classes = new Set(options.classes ?? DEFAULT_CLASSES);
 		const substrings = options.commentSubstrings ?? DEFAULT_COMMENT_SUBSTRINGS;
+		// Match each marker as a standalone token, so `compatible alias` does not
+		// fire inside `incompatible aliasing`. The lookarounds only bite at a
+		// marker edge that is itself alphanumeric.
+		const markers = substrings.map(substring => ({
+			marker: substring,
+			regex: new RegExp(`(?<![A-Za-z0-9])${escapeRegExp(substring)}(?![A-Za-z0-9])`, 'i'),
+		}));
 		const sourceCode = context.sourceCode ?? context.getSourceCode();
 
 		function checkName(node, name, hint) {
@@ -95,13 +110,12 @@ export default {
 			},
 			Program() {
 				for (const comment of sourceCode.getAllComments()) {
-					const lower = comment.value.toLowerCase();
-					for (const substring of substrings) {
-						if (lower.includes(substring.toLowerCase())) {
+					for (const { marker, regex } of markers) {
+						if (regex.test(comment.value)) {
 							context.report({
 								loc: comment.loc,
 								messageId: 'bannedComment',
-								data: { marker: substring },
+								data: { marker },
 							});
 							break;
 						}

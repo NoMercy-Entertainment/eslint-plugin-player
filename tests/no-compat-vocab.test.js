@@ -30,6 +30,8 @@ ruleTester.run('no-compat-vocab', rule, {
 		'type PlayState = \'playing\' | \'paused\';',
 		'// Resolve before init — re-init corrupts a live instance.',
 		'const nmplayer = () => {};',
+		// "compatible alias" as a substring of another word is not a compat marker.
+		'// incompatible aliasing across cores\nconst value = 1;',
 	],
 	invalid: [
 		{
