@@ -46,5 +46,10 @@ ruleTester.run('no-raw-throw-in-plugin', rule, {
 			code: 'class P extends core.Plugin { use() { throw new RangeError(\'r\'); } }',
 			errors: [{ messageId: 'rawThrow', data: { ctor: 'RangeError' } }],
 		},
+		// Namespaced constructor is still a raw throw.
+		{
+			code: 'class P extends Plugin { use() { throw new window.Error(\'x\'); } }',
+			errors: [{ messageId: 'rawThrow', data: { ctor: 'Error' } }],
+		},
 	],
 });

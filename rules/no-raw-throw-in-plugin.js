@@ -35,6 +35,31 @@ const RAW_ERROR_CTORS = new Set([
 	'AggregateError',
 ]);
 
+// `new window.Error(...)` reaches the same global constructor as `new Error(...)`.
+const GLOBAL_RECEIVERS = new Set(['window', 'globalThis', 'self']);
+
+/**
+ * The raw error constructor name a `new`-callee resolves to (bare `Error` or
+ * `window.Error`), or null when it is not a banned raw constructor.
+ *
+ * @param {import('estree').Node} callee
+ * @returns {string | null}
+ */
+function rawErrorCtorName(callee) {
+	if (callee.type === 'Identifier' && RAW_ERROR_CTORS.has(callee.name))
+		return callee.name;
+	if (
+		callee.type === 'MemberExpression'
+		&& !callee.computed
+		&& callee.object.type === 'Identifier'
+		&& GLOBAL_RECEIVERS.has(callee.object.name)
+		&& callee.property.type === 'Identifier'
+		&& RAW_ERROR_CTORS.has(callee.property.name)
+	)
+		return callee.property.name;
+	return null;
+}
+
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
 	meta: {
@@ -54,7 +79,8 @@ export default {
 				const argument = node.argument;
 				if (!argument || argument.type !== 'NewExpression')
 					return;
-				if (argument.callee.type !== 'Identifier' || !RAW_ERROR_CTORS.has(argument.callee.name))
+				const ctor = rawErrorCtorName(argument.callee);
+				if (!ctor)
 					return;
 				if (!inPluginSubclass(node))
 					return;
@@ -62,7 +88,7 @@ export default {
 				context.report({
 					node,
 					messageId: 'rawThrow',
-					data: { ctor: argument.callee.name },
+					data: { ctor },
 				});
 			},
 		};
