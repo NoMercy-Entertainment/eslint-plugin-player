@@ -53,5 +53,14 @@ ruleTester.run('no-raw-player-bus', rule, {
 			code: 'class P extends core.Plugin { use() { this.player.on(\'play\', () => {}); } }',
 			errors: [{ messageId: 'rawBus' }],
 		},
+		// Computed access must not bypass the ban.
+		{
+			code: 'class P extends Plugin { use() { this.player[\'on\'](\'play\', () => {}); } }',
+			errors: [{ messageId: 'rawBus', data: { method: 'on' } }],
+		},
+		{
+			code: 'class P extends Plugin { use() { this[\'player\'].on(\'play\', () => {}); } }',
+			errors: [{ messageId: 'rawBus', data: { method: 'on' } }],
+		},
 	],
 });

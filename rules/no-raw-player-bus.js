@@ -18,14 +18,40 @@
  * The design half (whether a behaviour should be a player concern at all) stays
  * a human judgement.
  *
- * `this.player.emit('plugin:...')` and other player methods (`play`, `seek`,
- * `getPlugin`, ...) are the legitimate action surface and are NOT flagged — only
- * the four bus methods are.
+ * Player action methods (`play`, `seek`, `getPlugin`, ...) are the legitimate
+ * action surface and are NOT flagged — only the four bus methods are.
  */
 
 import { inPluginSubclass } from './_in-plugin-subclass.js';
 
 const BUS_METHODS = new Set(['on', 'once', 'off', 'emit']);
+
+/**
+ * The member name being accessed — a plain identifier property or a computed
+ * string-literal (`foo['on']`) — or null when it is neither.
+ *
+ * @param {import('estree').MemberExpression} node
+ * @returns {string | null}
+ */
+function memberName(node) {
+	if (!node.computed)
+		return node.property.type === 'Identifier' ? node.property.name : null;
+	return node.property.type === 'Literal' && typeof node.property.value === 'string'
+		? node.property.value
+		: null;
+}
+
+/**
+ * True when `node` reads `this.player` (dot or computed string-literal form).
+ *
+ * @param {import('estree').Node} node
+ * @returns {boolean}
+ */
+function isThisPlayer(node) {
+	return node.type === 'MemberExpression'
+		&& node.object.type === 'ThisExpression'
+		&& memberName(node) === 'player';
+}
 
 /** @type {import('eslint').Rule.RuleModule} */
 export default {
@@ -44,20 +70,14 @@ export default {
 		return {
 			CallExpression(node) {
 				const callee = node.callee;
-				if (callee.type !== 'MemberExpression' || callee.computed)
+				if (callee.type !== 'MemberExpression')
 					return;
-				if (callee.property.type !== 'Identifier' || !BUS_METHODS.has(callee.property.name))
+				const method = memberName(callee);
+				if (method === null || !BUS_METHODS.has(method))
 					return;
 
 				// object must be `this.player`
-				const object = callee.object;
-				if (
-					object.type !== 'MemberExpression'
-					|| object.computed
-					|| object.object.type !== 'ThisExpression'
-					|| object.property.type !== 'Identifier'
-					|| object.property.name !== 'player'
-				)
+				if (!isThisPlayer(callee.object))
 					return;
 
 				if (!inPluginSubclass(node))
@@ -66,7 +86,7 @@ export default {
 				context.report({
 					node: callee,
 					messageId: 'rawBus',
-					data: { method: callee.property.name },
+					data: { method },
 				});
 			},
 		};
