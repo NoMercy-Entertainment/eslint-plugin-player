@@ -40,19 +40,39 @@ function extendsPlugin(superClass) {
 }
 
 /**
+ * True when `member`'s key is `id` — a plain `id` identifier or the computed /
+ * quoted string-literal `'id'` form.
+ *
+ * @param {import('estree').Node} member
+ * @returns {boolean}
+ */
+function keyIsId(member) {
+	const key = member.key;
+	if (key.type === 'Identifier')
+		return key.name === 'id';
+	if (key.type === 'Literal')
+		return key.value === 'id';
+	return false;
+}
+
+/**
  * True when the class body declares an own `static id` (any access modifier).
- * Matches `PropertyDefinition` with `static: true` and key name `id`.
+ * Matches a static field (`static id = ...`, `static ['id'] = ...`) or a static
+ * getter (`static get id() {...}`).
  *
  * @param {import('estree').Node} classNode
  * @returns {boolean}
  */
 function declaresStaticId(classNode) {
-	return classNode.body.body.some(member =>
-		member.type === 'PropertyDefinition'
-		&& member.static === true
-		&& member.key.type === 'Identifier'
-		&& member.key.name === 'id',
-	);
+	return classNode.body.body.some((member) => {
+		if (member.static !== true)
+			return false;
+		if (member.type === 'PropertyDefinition')
+			return keyIsId(member);
+		if (member.type === 'MethodDefinition' && member.kind === 'get')
+			return keyIsId(member);
+		return false;
+	});
 }
 
 /** @type {import('eslint').Rule.RuleModule} */

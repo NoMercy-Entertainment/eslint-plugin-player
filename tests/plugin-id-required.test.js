@@ -28,6 +28,10 @@ ruleTester.run('plugin-id-required', rule, {
 		'class P extends Plugin { static override readonly id = \'my-plugin\'; }',
 		'class P extends Plugin<NMVideoPlayer> { static readonly id = \'my-plugin\'; }',
 		'class P extends core.Plugin { static id = \'my-plugin\'; }',
+		// A static getter declares the id just as well as a field.
+		'class P extends Plugin { static get id() { return \'my-plugin\'; } }',
+		// Computed string-literal key still declares the id.
+		'class P extends Plugin { static [\'id\'] = \'my-plugin\'; }',
 		// Abstract intermediate base legitimately defers the id to subclasses.
 		'abstract class Base extends Plugin { protected abstract render(): void; }',
 		// Not a plugin — no obligation.
