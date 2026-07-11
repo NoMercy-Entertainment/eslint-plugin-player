@@ -47,6 +47,17 @@ export default {
 					data: { type: sourceCode.getText(annotation) },
 				});
 			},
+
+			TSTypeAssertion(node) {
+				if (node.expression.type !== 'ObjectExpression')
+					return;
+
+				context.report({
+					node,
+					messageId: 'literalCast',
+					data: { type: sourceCode.getText(node.typeAnnotation) },
+				});
+			},
 		};
 	},
 };

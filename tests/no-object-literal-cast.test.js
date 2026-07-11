@@ -28,6 +28,8 @@ ruleTester.run('no-object-literal-cast', rule, {
 		'const change: SubtitleCueChange = { cues: [], language: undefined };',
 		'const narrowed = payload as SubtitleCueChange;',
 		'const list = [] as number[];',
+		// Angle-bracket assertion on a non-literal is not this rule's concern.
+		'const narrowed = <SubtitleCueChange>payload;',
 	],
 	invalid: [
 		{
@@ -36,6 +38,11 @@ ruleTester.run('no-object-literal-cast', rule, {
 		},
 		{
 			code: 'emit(\'subtitleCue\', { cues: [] } as SubtitleCueChange);',
+			errors: [{ messageId: 'literalCast' }],
+		},
+		// Angle-bracket assertion is equally banned.
+		{
+			code: 'const change = <SubtitleCueChange>{ cues: [] };',
 			errors: [{ messageId: 'literalCast' }],
 		},
 	],
