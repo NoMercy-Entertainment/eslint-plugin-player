@@ -7,6 +7,7 @@ on:
 
 jobs:
   publish-npm:
+    timeout-minutes: 7200
     runs-on: [self-hosted, Linux, X64, beast-unit]
     permissions:
       contents: read
