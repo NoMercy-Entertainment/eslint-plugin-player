@@ -18,6 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Before setup-node: its yarn cache step runs the global yarn 1 otherwise,
+      # which refuses a repo that pins yarn 4 in packageManager.
+      - name: Enable corepack
+        run: corepack enable
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
