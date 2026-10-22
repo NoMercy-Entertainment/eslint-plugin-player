@@ -8,7 +8,7 @@ on:
 jobs:
   publish-npm:
     timeout-minutes: 7200
-    runs-on: [self-hosted, Linux, X64, beast-unit]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -27,7 +27,7 @@ jobs:
         run: npm install -g npm@latest
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: yarn install --immutable
 
       - name: Check if version is already published
         id: version-check
@@ -45,7 +45,7 @@ jobs:
 
       - name: Test
         if: steps.version-check.outputs.skip != 'true'
-        run: npm run test
+        run: yarn test
 
       - name: Publish package
         if: steps.version-check.outputs.skip != 'true'

@@ -75,13 +75,13 @@ Two things eslint cannot see (it lints one file at a time) ship as scripts for C
 | `scripts/check-duplicate-symbols.mjs` | No exported constant, type, or enum is byte-identical in both video and music. Identical bodies are shared code that belongs in core. |
 
 ```sh
-npm run check:exports
-npm run check:duplicates
+yarn check:exports
+yarn check:duplicates
 ```
 
 ## Tests
 
 ```sh
-npm install
-npm test
+yarn install
+yarn test
 ```
